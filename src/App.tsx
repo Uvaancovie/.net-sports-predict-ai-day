@@ -93,7 +93,12 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="relative min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans overflow-x-hidden">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-40 right-[-10%] h-[520px] w-[520px] rounded-full bg-indigo-100/60 blur-3xl"
+      />
+
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -102,7 +107,7 @@ export const App: React.FC = () => {
         isLoading={isLoading}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="relative flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'live' && (
           <LiveOddsExplorer
             sports={sports}
@@ -137,10 +142,10 @@ export const App: React.FC = () => {
       />
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-6 text-xs text-slate-500">
+      <footer className="relative border-t border-slate-200 bg-white py-6 text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-400">Developing A .NET Sports Predictor</span>
+            <span className="font-semibold text-slate-700">Developing A .NET Sports Predictor</span>
             <span>•</span>
             <span>Speaker: Uvaan Govender</span>
           </div>
@@ -150,7 +155,7 @@ export const App: React.FC = () => {
               href="/docs/index.html"
               target="_blank"
               rel="noreferrer"
-              className="text-cyan-400 hover:text-cyan-300 font-medium"
+              className="text-indigo-600 hover:text-indigo-700 font-medium"
             >
               Booking API Reference
             </a>

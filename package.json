@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
+    "dev:net": "vite --port 5178 --strictPort",
+    "dotnet": "dotnet run --project dotnet-api/src/SportsPredictor.Api",
     "build": "vite build",
     "start": "tsx server.ts",
     "lint": "tsc --noEmit"
