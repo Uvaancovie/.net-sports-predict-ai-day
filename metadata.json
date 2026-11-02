@@ -1,0 +1,8 @@
+{
+  "name": "Sports Ground Booking API",
+  "description": "Developing A .NET Sports Predictor — Live sports intelligence, Odds API integration, Monte Carlo simulation, value bet analysis, and conference presentation kit.",
+  "requestFeedback": false,
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

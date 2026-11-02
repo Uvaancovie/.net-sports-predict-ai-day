@@ -503,6 +503,8 @@
             Feedback</div>
         <div class="sidebar-section">Frontend Guide</div>
         <div class="nav-item" onclick="show('frontend',this)">Integration Notes</div>
+        <div class="sidebar-section">Live API Explorer</div>
+        <div class="nav-item" onclick="show('playground',this)"><span class="method-badge post">LIVE</span> Test Console</div>
     </nav>
 
     <main class="content">
@@ -515,7 +517,7 @@
                 authentication, SQL Server, and Entity Framework Core.</p>
             <div class="section-block">
                 <div class="section-label">Base URL</div>
-                <pre>http://SERVER_IP:5107/api/v1</pre>
+                <pre id="api-base-url">/api/v1</pre>
             </div>
             <div class="section-block">
                 <div class="section-label">Authentication</div>
@@ -1303,7 +1305,7 @@
             <h2>JavaScript fetch example</h2>
             <div class="section-block">
                 <div class="section-label">Login and store token</div>
-                <pre>const res = await fetch('http://SERVER_IP:5107/api/v1/auth/login', {
+                <pre>const res = await fetch('/api/v1/auth/login', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ email, password })
@@ -1315,7 +1317,7 @@ if (success) localStorage.setItem('token', data.token);</pre>
                 <div class="section-label">Authenticated request helper</div>
                 <pre>const api = async (path, options = {}) => {
   const token = localStorage.getItem('token');
-  const res = await fetch(`http://SERVER_IP:5107/api/v1${path}`, {
+  const res = await fetch(`/api/v1${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -1338,14 +1340,185 @@ const confirmed = await api(`/payments/pay/${booking.id}`, { method:'POST' });</
             </div>
         </div>
 
+        <!-- LIVE PLAYGROUND -->
+        <div class="page" id="page-playground">
+            <h1>Interactive Live API Console</h1>
+            <p class="desc">Test the live Sports Ground Booking API running in this instance. Select an endpoint or customize the method, path, and body.</p>
+            
+            <div class="section-block">
+                <div class="section-label">Quick Actions & Auth</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+                    <button class="try-btn" onclick="quickFill('login-admin')">Login as Admin (admin@cricketbooking.com)</button>
+                    <button class="try-btn" onclick="quickFill('login-user')">Login as User (user@cricketbooking.com)</button>
+                    <button class="try-btn" onclick="quickFill('get-grounds')">Get Grounds</button>
+                    <button class="try-btn" onclick="quickFill('get-slots')">Get Slots</button>
+                    <button class="try-btn" onclick="quickFill('get-addons')">Get Addons</button>
+                    <button class="try-btn" onclick="quickFill('check-avail')">Check Availability</button>
+                    <button class="try-btn" onclick="quickFill('admin-dash')">Admin Dashboard</button>
+                    <button class="try-btn" onclick="quickFill('admin-rev')">Revenue Summary</button>
+                </div>
+                <div style="margin-top:10px;font-size:12px;color:var(--color-text-secondary)">
+                    Active Auth Token: <span id="auth-status" style="font-weight:600;color:var(--amber)">None</span>
+                    <button class="try-btn" style="margin-left:8px;padding:2px 8px;" onclick="clearToken()">Clear Token</button>
+                </div>
+            </div>
+
+            <div class="section-block">
+                <div class="section-label">Request Builder</div>
+                <div style="display:grid;grid-template-columns:120px 1fr 100px;gap:8px;margin-bottom:10px">
+                    <select id="req-method" style="padding:8px 10px;border-radius:6px;border:1px solid var(--color-border-tertiary);font-size:13px;font-weight:600;">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                    <input id="req-path" type="text" value="/api/v1/grounds" style="padding:8px 12px;border-radius:6px;border:1px solid var(--color-border-tertiary);font-family:var(--font-mono);font-size:13px;" />
+                    <button id="send-btn" class="try-btn" style="margin:0;background:var(--green);color:#fff;border:none;font-weight:600;cursor:pointer;" onclick="executeLiveRequest()">Send</button>
+                </div>
+
+                <div id="body-section" style="margin-top:12px">
+                    <div class="section-label">JSON Request Body (for POST/PUT)</div>
+                    <textarea id="req-body" rows="6" style="width:100%;padding:10px;border-radius:6px;border:1px solid var(--color-border-tertiary);font-family:var(--font-mono);font-size:12px;box-sizing:border-box;" placeholder='{"email":"admin@cricketbooking.com","password":"Admin@123"}'></textarea>
+                </div>
+            </div>
+
+            <div class="section-block">
+                <div class="section-label">Live Response</div>
+                <div id="resp-meta" style="font-size:12px;margin-bottom:6px;font-weight:600;color:var(--color-text-secondary)">Click 'Send' to dispatch request...</div>
+                <pre id="resp-output" style="max-height:400px;overflow:auto;">// Live JSON response will appear here</pre>
+            </div>
+        </div>
+
     </main>
 </div>
 
 <script>
+    let currentToken = localStorage.getItem('token') || '';
+    updateTokenDisplay();
+
     function show(id, el) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById('page-' + id).classList.add('active');
-        el.classList.add('active');
+        if (el) el.classList.add('active');
     }
+
+    function updateTokenDisplay() {
+        const el = document.getElementById('auth-status');
+        if (!el) return;
+        if (currentToken) {
+            try {
+                const parts = currentToken.split('.');
+                const payload = JSON.parse(atob(parts[1]));
+                el.innerText = (payload.unique_name || payload.name || payload.email || 'Valid') + ' (' + (payload.role || 'User') + ')';
+                el.style.color = 'var(--green-dk)';
+            } catch {
+                el.innerText = 'Token set';
+                el.style.color = 'var(--green-dk)';
+            }
+        } else {
+            el.innerText = 'None';
+            el.style.color = 'var(--amber)';
+        }
+    }
+
+    function clearToken() {
+        currentToken = '';
+        localStorage.removeItem('token');
+        updateTokenDisplay();
+    }
+
+    function quickFill(action) {
+        const methodEl = document.getElementById('req-method');
+        const pathEl = document.getElementById('req-path');
+        const bodyEl = document.getElementById('req-body');
+
+        if (action === 'login-admin') {
+            methodEl.value = 'POST';
+            pathEl.value = '/api/v1/auth/login';
+            bodyEl.value = JSON.stringify({ email: 'admin@cricketbooking.com', password: 'Admin@123' }, null, 2);
+        } else if (action === 'login-user') {
+            methodEl.value = 'POST';
+            pathEl.value = '/api/v1/auth/login';
+            bodyEl.value = JSON.stringify({ email: 'user@cricketbooking.com', password: 'User@123' }, null, 2);
+        } else if (action === 'get-grounds') {
+            methodEl.value = 'GET';
+            pathEl.value = '/api/v1/grounds';
+            bodyEl.value = '';
+        } else if (action === 'get-slots') {
+            methodEl.value = 'GET';
+            pathEl.value = '/api/v1/slots';
+            bodyEl.value = '';
+        } else if (action === 'get-addons') {
+            methodEl.value = 'GET';
+            pathEl.value = '/api/v1/addons';
+            bodyEl.value = '';
+        } else if (action === 'check-avail') {
+            methodEl.value = 'GET';
+            pathEl.value = '/api/v1/Booking/availability?groundId=1&date=2026-05-15';
+            bodyEl.value = '';
+        } else if (action === 'admin-dash') {
+            methodEl.value = 'GET';
+            pathEl.value = '/api/v1/admin/dashboard';
+            bodyEl.value = '';
+        } else if (action === 'admin-rev') {
+            methodEl.value = 'GET';
+            pathEl.value = '/api/v1/admin/revenue/summary';
+            bodyEl.value = '';
+        }
+    }
+
+    async function executeLiveRequest() {
+        const method = document.getElementById('req-method').value;
+        const path = document.getElementById('req-path').value.trim();
+        const bodyRaw = document.getElementById('req-body').value.trim();
+        const metaEl = document.getElementById('resp-meta');
+        const outputEl = document.getElementById('resp-output');
+
+        metaEl.innerText = 'Sending ' + method + ' ' + path + '...';
+        outputEl.innerText = 'Loading...';
+
+        try {
+            const headers = { 'Content-Type': 'application/json' };
+            if (currentToken) {
+                headers['Authorization'] = 'Bearer ' + currentToken;
+            }
+
+            const options = { method, headers };
+            if (method !== 'GET' && method !== 'HEAD' && bodyRaw) {
+                options.body = bodyRaw;
+            }
+
+            const startTime = performance.now();
+            const res = await fetch(path, options);
+            const duration = Math.round(performance.now() - startTime);
+
+            metaEl.innerHTML = '<span class="' + (res.ok ? 'status-200' : 'status-err') + '">Status: ' + res.status + ' ' + res.statusText + '</span> &bull; Time: ' + duration + 'ms';
+
+            const text = await res.text();
+            try {
+                const json = JSON.parse(text);
+                outputEl.innerText = JSON.stringify(json, null, 2);
+
+                // If logging in, save token automatically
+                if (res.ok && path.includes('/auth/login') && json.data && json.data.token) {
+                    currentToken = json.data.token;
+                    localStorage.setItem('token', currentToken);
+                    updateTokenDisplay();
+                }
+            } catch {
+                outputEl.innerText = text || '(Empty response)';
+            }
+        } catch (err) {
+            metaEl.innerHTML = '<span class="status-err">Network Error</span>';
+            outputEl.innerText = String(err);
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const baseUrlEl = document.getElementById('api-base-url');
+        if (baseUrlEl) {
+            baseUrlEl.innerText = window.location.origin + '/api/v1';
+        }
+    });
 </script>
