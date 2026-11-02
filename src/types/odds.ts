@@ -7,6 +7,37 @@ export interface Sport {
   has_outrights: boolean;
 }
 
+export type FormResult = 'W' | 'D' | 'L';
+
+export interface FormEntry {
+  result: FormResult;
+  opponent: string;
+  score: string;
+  date: string;
+}
+
+export interface H2HMatch {
+  date: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number;
+  awayScore: number;
+  winner: 'home' | 'away' | 'draw';
+}
+
+export interface HeadToHeadRecord {
+  previousMatches: H2HMatch[];
+  homeForm: FormEntry[];
+  awayForm: FormEntry[];
+  h2hSummary: {
+    homeWins: number;
+    awayWins: number;
+    draws: number;
+    totalMatches: number;
+    avgScore: number;
+  };
+}
+
 export interface Outcome {
   name: string;
   price: number; // decimal or american
@@ -35,6 +66,7 @@ export interface OddsEvent {
   home_team: string;
   away_team: string;
   bookmakers: Bookmaker[];
+  h2h?: HeadToHeadRecord;
 }
 
 export interface PredictionResult {
@@ -88,6 +120,8 @@ export interface PredictionResult {
     keyFactors: string[];
     riskLevel: 'Low' | 'Medium' | 'High';
   };
+  h2h?: HeadToHeadRecord;
+  formAdjustment?: number;
 }
 
 export interface QuotaInfo {

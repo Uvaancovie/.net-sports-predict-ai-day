@@ -1,4 +1,5 @@
 import { Sport, OddsEvent, PredictionResult, QuotaInfo } from '../types/odds';
+import { CheckoutRequest, SubscriptionRecord } from '../types/subscription';
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, options);
@@ -68,5 +69,21 @@ export const api = {
       body: JSON.stringify(params),
     });
     return data.prediction;
+  },
+
+  async simulateCheckout(request: CheckoutRequest): Promise<SubscriptionRecord> {
+    const data = await fetchJson<{ success: boolean; subscription: SubscriptionRecord }>('/api/checkout/simulate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+    return data.subscription;
+  },
+
+  async verifySubscription(licenseKey: string): Promise<SubscriptionRecord> {
+    const data = await fetchJson<{ success: boolean; subscription: SubscriptionRecord }>(
+      `/api/checkout/verify/${encodeURIComponent(licenseKey)}`
+    );
+    return data.subscription;
   },
 };

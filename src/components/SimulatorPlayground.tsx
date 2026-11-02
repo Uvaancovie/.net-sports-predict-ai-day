@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PredictionResult } from '../types/odds';
 import { api } from '../services/api';
-import { Play, Sparkles, Sliders, Shield, RotateCcw, BarChart3, CheckCircle2 } from 'lucide-react';
+import { Play, Sparkles, Sliders, RotateCcw, BarChart3 } from 'lucide-react';
 
 export const SimulatorPlayground: React.FC = () => {
   const [homeTeam, setHomeTeam] = useState('Springboks (South Africa)');
@@ -37,83 +37,44 @@ export const SimulatorPlayground: React.FC = () => {
     }
   };
 
-  const presetMatchups = [
-    {
-      name: 'Springboks vs All Blacks (Rugby)',
-      home: 'South Africa',
-      away: 'New Zealand',
-      sport: 'Rugby Union',
-      hOdds: '1.90',
-      aOdds: '2.05',
-      dOdds: '25.0',
-    },
-    {
-      name: 'Arsenal vs Man City (EPL)',
-      home: 'Arsenal',
-      away: 'Manchester City',
-      sport: 'Football / Soccer',
-      hOdds: '2.40',
-      aOdds: '2.80',
-      dOdds: '3.40',
-    },
-    {
-      name: 'Proteas vs Australia (Cricket)',
-      home: 'South Africa',
-      away: 'Australia',
-      sport: 'Cricket Test Match',
-      hOdds: '2.20',
-      aOdds: '1.95',
-      dOdds: '6.00',
-    },
-    {
-      name: 'Kaizer Chiefs vs Orlando Pirates (PSL)',
-      home: 'Kaizer Chiefs',
-      away: 'Orlando Pirates',
-      sport: 'Football / Soccer',
-      hOdds: '2.60',
-      aOdds: '2.70',
-      dOdds: '2.90',
-    },
-    {
-      name: 'Celtics vs Lakers (NBA)',
-      home: 'Boston Celtics',
-      away: 'Los Angeles Lakers',
-      sport: 'Basketball',
-      hOdds: '1.45',
-      aOdds: '2.85',
-      dOdds: '',
-    },
+  const presets = [
+    { name: 'Springboks vs All Blacks', home: 'South Africa', away: 'New Zealand', sport: 'Rugby Union', h: '1.90', a: '2.05', d: '25.0' },
+    { name: 'Arsenal vs Man City', home: 'Arsenal', away: 'Manchester City', sport: 'Football / Soccer', h: '2.40', a: '2.80', d: '3.40' },
+    { name: 'Proteas vs Australia', home: 'South Africa', away: 'Australia', sport: 'Cricket Test Match', h: '2.20', a: '1.95', d: '6.00' },
+    { name: 'Chiefs vs Pirates', home: 'Kaizer Chiefs', away: 'Orlando Pirates', sport: 'Football / Soccer', h: '2.60', a: '2.70', d: '2.90' },
+    { name: 'Celtics vs Lakers', home: 'Boston Celtics', away: 'Los Angeles Lakers', sport: 'Basketball', h: '1.45', a: '2.85', d: '' },
   ];
+
+  const inputClass = 'glass-input w-full px-3 py-2 text-xs';
 
   return (
     <div className="space-y-6">
-      {/* Introduction banner */}
-      <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-6 rounded-3xl border border-indigo-100 shadow-sm space-y-2">
-        <div className="flex items-center gap-2 text-indigo-600 text-xs font-mono font-semibold uppercase tracking-wider">
-          <Sparkles className="w-4 h-4" /> Custom Match Prediction Lab
+      <div className="glass-panel rounded-3xl p-6 space-y-3">
+        <div className="flex items-center gap-2 text-cyan-700 text-[11px] font-semibold uppercase tracking-wider">
+          <Sparkles className="w-4 h-4" /> Custom prediction lab
         </div>
-        <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-          Interactive Monte Carlo &amp; Implied Odds Simulator
+        <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
+          Interactive Monte Carlo &amp; implied odds simulator
         </h2>
         <p className="text-xs text-slate-600 max-w-2xl leading-relaxed">
-          Input any two teams, specify market consensus decimal odds, calibrate home advantage factors, and trigger up to 50,000 algorithmic simulations. Ideal for live on-stage audience interaction at Durban Data &amp; AI Day!
+          Input any two teams, set consensus decimal odds, calibrate home advantage, and run up to 50,000
+          simulations. The same deterministic form engine used in the live feed enriches every run.
         </p>
 
-        {/* Quick presets */}
         <div className="pt-2 flex flex-wrap gap-2 items-center">
-          <span className="text-xs text-slate-500 font-medium">Quick Presets:</span>
-          {presetMatchups.map((p, idx) => (
+          <span className="text-[11px] text-slate-500 font-medium">Presets</span>
+          {presets.map((p, idx) => (
             <button
               key={idx}
               onClick={() => {
                 setHomeTeam(p.home);
                 setAwayTeam(p.away);
                 setSportType(p.sport);
-                setHomeOdds(p.hOdds);
-                setAwayOdds(p.aOdds);
-                setDrawOdds(p.dOdds);
+                setHomeOdds(p.h);
+                setAwayOdds(p.a);
+                setDrawOdds(p.d);
               }}
-              className="text-xs px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors font-medium"
+              className="text-[11px] px-2.5 py-1 rounded-lg bg-white/70 border border-white/80 hover:bg-white text-slate-600 transition-colors font-medium"
             >
               {p.name}
             </button>
@@ -122,87 +83,49 @@ export const SimulatorPlayground: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Form Controls */}
-        <div className="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-            <Sliders className="w-4 h-4 text-indigo-600" />
-            Match Parameters
+        <div className="lg:col-span-5 glass-panel rounded-3xl p-6 space-y-4">
+          <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <Sliders className="w-4 h-4 text-cyan-700" />
+            Match parameters
           </h3>
 
           <div className="space-y-3">
             <div>
-              <label className="text-xs text-slate-500 block mb-1">Sport / League</label>
-              <input
-                type="text"
-                value={sportType}
-                onChange={e => setSportType(e.target.value)}
-                className="w-full bg-white border border-slate-200 text-xs text-slate-900 px-3 py-2 rounded-xl focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              />
+              <label className="text-[11px] text-slate-500 block mb-1">Sport / league</label>
+              <input type="text" value={sportType} onChange={e => setSportType(e.target.value)} className={inputClass} />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-slate-500 block mb-1">Home Team</label>
-                <input
-                  type="text"
-                  value={homeTeam}
-                  onChange={e => setHomeTeam(e.target.value)}
-                  className="w-full bg-white border border-slate-200 text-xs text-slate-900 px-3 py-2 rounded-xl focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                />
+                <label className="text-[11px] text-slate-500 block mb-1">Home team</label>
+                <input type="text" value={homeTeam} onChange={e => setHomeTeam(e.target.value)} className={inputClass} />
               </div>
-
               <div>
-                <label className="text-xs text-slate-500 block mb-1">Away Team</label>
-                <input
-                  type="text"
-                  value={awayTeam}
-                  onChange={e => setAwayTeam(e.target.value)}
-                  className="w-full bg-white border border-slate-200 text-xs text-slate-900 px-3 py-2 rounded-xl focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                />
+                <label className="text-[11px] text-slate-500 block mb-1">Away team</label>
+                <input type="text" value={awayTeam} onChange={e => setAwayTeam(e.target.value)} className={inputClass} />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-2 pt-1">
               <div>
-                <label className="text-xs text-slate-500 block mb-1">Home Odds</label>
-                <input
-                  type="number"
-                  step="0.05"
-                  value={homeOdds}
-                  onChange={e => setHomeOdds(e.target.value)}
-                  className="w-full bg-white border border-slate-200 text-xs text-slate-900 px-3 py-2 rounded-xl font-mono focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                />
+                <label className="text-[11px] text-slate-500 block mb-1">Home odds</label>
+                <input type="number" step="0.05" value={homeOdds} onChange={e => setHomeOdds(e.target.value)} className={`${inputClass} metric`} />
               </div>
-
               <div>
-                <label className="text-xs text-slate-500 block mb-1">Draw Odds (Opt)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={drawOdds}
-                  onChange={e => setDrawOdds(e.target.value)}
-                  placeholder="e.g. 3.5"
-                  className="w-full bg-white border border-slate-200 text-xs text-slate-900 px-3 py-2 rounded-xl font-mono focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                />
+                <label className="text-[11px] text-slate-500 block mb-1">Draw (opt)</label>
+                <input type="number" step="0.1" value={drawOdds} onChange={e => setDrawOdds(e.target.value)} placeholder="3.5" className={`${inputClass} metric`} />
               </div>
-
               <div>
-                <label className="text-xs text-slate-500 block mb-1">Away Odds</label>
-                <input
-                  type="number"
-                  step="0.05"
-                  value={awayOdds}
-                  onChange={e => setAwayOdds(e.target.value)}
-                  className="w-full bg-white border border-slate-200 text-xs text-slate-900 px-3 py-2 rounded-xl font-mono focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                />
+                <label className="text-[11px] text-slate-500 block mb-1">Away odds</label>
+                <input type="number" step="0.05" value={awayOdds} onChange={e => setAwayOdds(e.target.value)} className={`${inputClass} metric`} />
               </div>
             </div>
 
-            <div className="pt-2 space-y-3 border-t border-slate-200">
+            <div className="pt-3 space-y-3 border-t border-white/70">
               <div>
-                <div className="flex justify-between text-xs text-slate-500 mb-1">
-                  <span>Home Field Advantage</span>
-                  <span className="font-mono text-indigo-600">+{homeAdvantage}%</span>
+                <div className="flex justify-between text-[11px] text-slate-500 mb-1">
+                  <span>Home field advantage</span>
+                  <span className="metric text-cyan-700">+{homeAdvantage}%</span>
                 </div>
                 <input
                   type="range"
@@ -210,14 +133,14 @@ export const SimulatorPlayground: React.FC = () => {
                   max="15"
                   value={homeAdvantage}
                   onChange={e => setHomeAdvantage(Number(e.target.value))}
-                  className="w-full accent-indigo-600 bg-slate-200 h-1.5 rounded-lg appearance-none cursor-pointer"
+                  className="w-full accent-cyan-600 bg-slate-200 h-1.5 rounded-lg appearance-none cursor-pointer"
                 />
               </div>
 
               <div>
-                <div className="flex justify-between text-xs text-slate-500 mb-1">
-                  <span>Simulation Iterations</span>
-                  <span className="font-mono text-indigo-600">{iterations.toLocaleString()} runs</span>
+                <div className="flex justify-between text-[11px] text-slate-500 mb-1">
+                  <span>Simulation iterations</span>
+                  <span className="metric text-cyan-700">{iterations.toLocaleString()} runs</span>
                 </div>
                 <input
                   type="range"
@@ -226,7 +149,7 @@ export const SimulatorPlayground: React.FC = () => {
                   step="5000"
                   value={iterations}
                   onChange={e => setIterations(Number(e.target.value))}
-                  className="w-full accent-indigo-600 bg-slate-200 h-1.5 rounded-lg appearance-none cursor-pointer"
+                  className="w-full accent-cyan-600 bg-slate-200 h-1.5 rounded-lg appearance-none cursor-pointer"
                 />
               </div>
             </div>
@@ -234,122 +157,118 @@ export const SimulatorPlayground: React.FC = () => {
             <button
               onClick={handleSimulate}
               disabled={isLoading}
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              className="w-full py-3 bg-gradient-to-r from-cyan-600 to-sky-600 hover:from-cyan-500 hover:to-sky-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-cyan-600/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
             >
               {isLoading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
               ) : (
                 <>
                   <Play className="w-4 h-4 fill-current" />
-                  <span>Execute {iterations.toLocaleString()} Simulations</span>
+                  <span>Execute {iterations.toLocaleString()} simulations</span>
                 </>
               )}
+            </button>
+            <button
+              onClick={() => setPrediction(null)}
+              className="w-full py-2 text-[11px] text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <RotateCcw className="w-3 h-3" /> Clear results
             </button>
           </div>
         </div>
 
-        {/* Results Output */}
-        <div className="lg:col-span-7 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-7 glass-panel rounded-3xl p-6 flex flex-col justify-between">
           {prediction ? (
             <div className="space-y-6">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+              <div className="flex items-center justify-between pb-3 border-b border-white/70">
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
                     {prediction.homeTeam} vs {prediction.awayTeam}
                   </h3>
-                  <p className="text-xs text-slate-500">
-                    Consensus Vig: {prediction.overroundPercent}% removed | Model Confidence: {prediction.confidenceScore}%
+                  <p className="text-[11px] text-slate-500">
+                    Vig <span className="metric">{prediction.overroundPercent}%</span> stripped
+                    <span className="text-slate-300"> · </span>
+                    confidence <span className="metric">{prediction.confidenceScore}%</span>
+                    {typeof prediction.formAdjustment === 'number' && (
+                      <>
+                        <span className="text-slate-300"> · </span>
+                        form <span className="metric">{prediction.formAdjustment > 0 ? '+' : ''}{prediction.formAdjustment} pts</span>
+                      </>
+                    )}
                   </p>
                 </div>
-                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 font-mono">
-                  Favored: {prediction.predictedWinner === 'home' ? prediction.homeTeam : prediction.predictedWinner === 'away' ? prediction.awayTeam : 'Draw'}
+                <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-700 border border-cyan-200/70 metric">
+                  {prediction.predictedWinner === 'home' ? prediction.homeTeam : prediction.predictedWinner === 'away' ? prediction.awayTeam : 'Draw'}
                 </span>
               </div>
 
-              {/* Probabilities Grid */}
               <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                  <div className="text-xs text-slate-500">{prediction.homeTeam}</div>
-                  <div className="text-2xl font-extrabold font-mono text-indigo-600 my-1">
-                    {prediction.trueProbabilities.home}%
-                  </div>
-                  <div className="text-[10px] text-slate-500">True Probability</div>
+                <div className="inner-well p-4 rounded-2xl">
+                  <div className="text-[11px] text-slate-500 truncate">{prediction.homeTeam}</div>
+                  <div className="text-2xl metric text-cyan-700 my-1">{prediction.trueProbabilities.home}%</div>
+                  <div className="text-[10px] text-slate-500">True probability</div>
                 </div>
-
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                  <div className="text-xs text-slate-500">Draw / Tie</div>
-                  <div className="text-2xl font-extrabold font-mono text-amber-400 my-1">
-                    {prediction.trueProbabilities.draw ?? 'N/A'}%
-                  </div>
-                  <div className="text-[10px] text-slate-500">Draw Probability</div>
+                <div className="inner-well p-4 rounded-2xl">
+                  <div className="text-[11px] text-slate-500">Draw / tie</div>
+                  <div className="text-2xl metric text-amber-600 my-1">{prediction.trueProbabilities.draw ?? '—'}%</div>
+                  <div className="text-[10px] text-slate-500">Draw probability</div>
                 </div>
-
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                  <div className="text-xs text-slate-500">{prediction.awayTeam}</div>
-                  <div className="text-2xl font-extrabold font-mono text-rose-400 my-1">
-                    {prediction.trueProbabilities.away}%
-                  </div>
-                  <div className="text-[10px] text-slate-500">True Probability</div>
+                <div className="inner-well p-4 rounded-2xl">
+                  <div className="text-[11px] text-slate-500 truncate">{prediction.awayTeam}</div>
+                  <div className="text-2xl metric text-rose-600 my-1">{prediction.trueProbabilities.away}%</div>
+                  <div className="text-[10px] text-slate-500">True probability</div>
                 </div>
               </div>
 
-              {/* Monte Carlo Visual breakdown */}
-              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
-                <div className="flex items-center justify-between text-xs">
+              <div className="inner-well p-5 rounded-2xl space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-1 text-[11px]">
                   <span className="font-bold text-slate-900 flex items-center gap-1.5">
-                    <BarChart3 className="w-4 h-4 text-indigo-600" />
-                    Monte Carlo Outcomes ({prediction.monteCarlo.iterations.toLocaleString()} runs)
+                    <BarChart3 className="w-4 h-4 text-cyan-700" />
+                    Monte Carlo outcomes ({prediction.monteCarlo.iterations.toLocaleString()} runs)
                   </span>
-                  <span className="text-slate-500 font-mono">
-                    Home {prediction.monteCarlo.homeWinPct}% • Draw {prediction.monteCarlo.drawPct}% • Away {prediction.monteCarlo.awayWinPct}%
+                  <span className="text-slate-500 metric">
+                    H {prediction.monteCarlo.homeWinPct}% · D {prediction.monteCarlo.drawPct}% · A {prediction.monteCarlo.awayWinPct}%
                   </span>
                 </div>
 
-                <div className="h-4 w-full bg-slate-200 rounded-full overflow-hidden flex shadow-inner">
-                  <div style={{ width: `${prediction.monteCarlo.homeWinPct}%` }} className="bg-indigo-500 h-full" />
+                <div className="h-4 w-full bg-slate-200/70 rounded-full overflow-hidden flex shadow-inner">
+                  <div style={{ width: `${prediction.monteCarlo.homeWinPct}%` }} className="bg-cyan-500 h-full" />
                   {prediction.monteCarlo.drawPct > 0 && (
                     <div style={{ width: `${prediction.monteCarlo.drawPct}%` }} className="bg-amber-400 h-full" />
                   )}
                   <div style={{ width: `${prediction.monteCarlo.awayWinPct}%` }} className="bg-rose-500 h-full" />
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-2 text-xs text-slate-500 font-mono text-center">
-                  <div>Home Wins: {prediction.monteCarlo.homeWins.toLocaleString()}</div>
-                  <div>Draws: {prediction.monteCarlo.draws.toLocaleString()}</div>
-                  <div>Away Wins: {prediction.monteCarlo.awayWins.toLocaleString()}</div>
+                <div className="grid grid-cols-3 gap-2 pt-2 text-[11px] text-slate-500 metric text-center">
+                  <div>Home {prediction.monteCarlo.homeWins.toLocaleString()}</div>
+                  <div>Draws {prediction.monteCarlo.draws.toLocaleString()}</div>
+                  <div>Away {prediction.monteCarlo.awayWins.toLocaleString()}</div>
                 </div>
               </div>
 
-              {/* Key Scorelines */}
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <div className="text-xs font-semibold text-slate-600 mb-2">
-                  Top Simulated Scorelines (Poisson Sampling)
-                </div>
+              <div className="inner-well p-4 rounded-2xl">
+                <div className="text-[11px] font-semibold text-slate-600 mb-2">Top simulated scorelines</div>
                 <div className="flex flex-wrap gap-2">
-                  {prediction.monteCarlo.simulatedScorelines.map((s: { score: string; count: number; pct: number }, idx: number) => (
-                    <div
-                      key={idx}
-                      className="px-3 py-1.5 bg-white rounded-xl border border-slate-200 text-xs font-mono text-slate-700"
-                    >
+                  {prediction.monteCarlo.simulatedScorelines.map((s, idx) => (
+                    <div key={idx} className="px-3 py-1.5 bg-white/70 rounded-xl border border-white/80 text-[11px] metric text-slate-700">
                       <span className="font-bold text-slate-900">{s.score}</span>{' '}
-                      <span className="text-emerald-400 text-[11px]">({s.pct}%)</span>
+                      <span className="text-emerald-600">({s.pct}%)</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Tactical summary */}
-              <div className="text-xs text-slate-600 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <span className="font-bold text-slate-900">Algorithmic Assessment: </span>
+              <div className="text-xs text-slate-600 inner-well p-4 rounded-2xl">
+                <span className="font-bold text-slate-900">Assessment: </span>
                 {prediction.tacticalAnalysis.summary}
               </div>
             </div>
           ) : (
             <div className="h-full flex flex-col items-center justify-center p-12 text-center text-slate-500 space-y-3">
-              <BarChart3 className="w-12 h-12 text-slate-700" />
-              <div className="text-sm font-medium text-slate-500">No simulation executed yet</div>
-              <p className="text-xs text-slate-500 max-w-sm">
-                Click 'Execute Simulations' or choose a quick preset on the left to run live Monte Carlo calculations.
+              <BarChart3 className="w-12 h-12 text-slate-300" />
+              <div className="text-sm font-medium">No simulation executed yet</div>
+              <p className="text-xs max-w-sm">
+                Pick a preset or execute simulations to run live Monte Carlo calculations.
               </p>
             </div>
           )}
@@ -358,6 +277,3 @@ export const SimulatorPlayground: React.FC = () => {
     </div>
   );
 };
-
-
-

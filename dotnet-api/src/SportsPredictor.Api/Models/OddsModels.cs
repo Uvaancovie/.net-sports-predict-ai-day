@@ -44,6 +44,7 @@ public sealed class OddsEventDto
     [JsonPropertyName("home_team")] public string HomeTeam { get; set; } = "";
     [JsonPropertyName("away_team")] public string AwayTeam { get; set; } = "";
     [JsonPropertyName("bookmakers")] public List<OddsBookmakerDto> Bookmakers { get; set; } = new();
+    [JsonPropertyName("h2h")] public HeadToHeadRecord? H2H { get; set; }
 }
 
 public sealed class QuotaInfo

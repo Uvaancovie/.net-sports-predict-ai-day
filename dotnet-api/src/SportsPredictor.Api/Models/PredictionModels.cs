@@ -1,5 +1,44 @@
 namespace SportsPredictor.Api.Models;
 
+using System.Text.Json.Serialization;
+
+public sealed class FormEntry
+{
+    public string Result { get; set; } = "D";
+    public string Opponent { get; set; } = "";
+    public string Score { get; set; } = "";
+    public string Date { get; set; } = "";
+}
+
+public sealed class H2HMatch
+{
+    public string Date { get; set; } = "";
+    public string HomeTeam { get; set; } = "";
+    public string AwayTeam { get; set; } = "";
+    public int HomeScore { get; set; }
+    public int AwayScore { get; set; }
+    public string Winner { get; set; } = "draw";
+}
+
+public sealed class H2HSummary
+{
+    public int HomeWins { get; set; }
+    public int AwayWins { get; set; }
+    public int Draws { get; set; }
+    public int TotalMatches { get; set; }
+    public double AvgScore { get; set; }
+}
+
+public sealed class HeadToHeadRecord
+{
+    public List<H2HMatch> PreviousMatches { get; set; } = new();
+    public List<FormEntry> HomeForm { get; set; } = new();
+    public List<FormEntry> AwayForm { get; set; } = new();
+
+    [JsonPropertyName("h2hSummary")]
+    public H2HSummary H2HSummary { get; set; } = new();
+}
+
 public sealed class ConsensusOdds
 {
     public double Home { get; set; }
@@ -73,4 +112,10 @@ public sealed class PredictionResult
     public MonteCarloResult MonteCarlo { get; set; } = new();
     public List<ValueBet> ValueBets { get; set; } = new();
     public TacticalAnalysis TacticalAnalysis { get; set; } = new();
+
+    [JsonPropertyName("h2h")]
+    public HeadToHeadRecord? H2H { get; set; }
+
+    [JsonPropertyName("formAdjustment")]
+    public double FormAdjustment { get; set; }
 }

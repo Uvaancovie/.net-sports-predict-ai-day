@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, Trophy, Presentation, Cpu, Database, RefreshCw, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Activity, Trophy, Presentation, Cpu, Database, RefreshCw } from 'lucide-react';
 import { QuotaInfo } from '../types/odds';
 
 interface HeaderProps {
@@ -10,6 +10,13 @@ interface HeaderProps {
   isLoading: boolean;
 }
 
+const tabs = [
+  { id: 'live', label: 'Live H2H', icon: Activity },
+  { id: 'simulator', label: 'Simulator', icon: Trophy },
+  { id: 'presentation', label: 'Presenter Mode', icon: Presentation },
+  { id: 'pipeline', label: 'Pipeline', icon: Database },
+] as const;
+
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   setActiveTab,
@@ -18,115 +25,92 @@ export const Header: React.FC<HeaderProps> = ({
   isLoading,
 }) => {
   return (
-    <header className="border-b border-slate-200 bg-white/90 backdrop-blur-md sticky top-0 z-40">
-      {/* Conference Announcement Banner */}
-      <div className="bg-indigo-50 border-b border-indigo-100 px-4 py-2 text-xs font-medium text-indigo-900 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-          <span className="font-bold uppercase tracking-wider text-indigo-700">Accepted Speaker Session</span>
-          <span className="hidden sm:inline text-indigo-300">|</span>
-          <span className="font-semibold">Data & AI Community Day Durban: Encore / .NET Conf SA</span>
-          <span className="hidden md:inline text-indigo-500">• Nov 21, 2026 @ Park Square, Umhlanga</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="bg-white border border-indigo-200 px-2 py-0.5 rounded text-[11px] font-mono text-indigo-700">Speaker: Uvaan</span>
-          <span className="bg-indigo-600 px-2 py-0.5 rounded text-[11px] font-mono text-white">50 Min Slot</span>
+    <header className="sticky top-0 z-40">
+      <div className="border-b border-white/60 bg-white/70 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-[11px] text-slate-500 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <span className="font-semibold text-slate-700">Accepted speaker session</span>
+            <span className="text-slate-300">·</span>
+            <span>Data &amp; AI Community Day Durban: Encore / .NET Conf SA</span>
+            <span className="hidden md:inline text-slate-300">·</span>
+            <span className="hidden md:inline">Nov 21, 2026 · Park Square, Umhlanga</span>
+          </div>
+          <div className="flex items-center gap-2 font-mono">
+            <span>Uvaan Govender</span>
+            <span className="text-slate-300">·</span>
+            <span className="text-emerald-700 font-semibold">50 min slot</span>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-4">
-          {/* Logo & Title */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
-              <Cpu className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold text-slate-900 tracking-tight">.NET Sports Predictor</h1>
-                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100 font-semibold">
-                  Odds API v4
-                </span>
+      <div className="bg-white/75 backdrop-blur-xl border-b border-white/70">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyan-500 via-sky-500 to-emerald-500 flex items-center justify-center text-white shadow-lg shadow-cyan-500/25 ring-1 ring-white/60">
+                <Cpu className="w-5 h-5" />
               </div>
-              <p className="text-xs text-slate-500 hidden sm:block">
-                Live Odds Intelligence, Vig-Stripping & Monte Carlo Simulation Engine
-              </p>
-            </div>
-          </div>
-
-          {/* Navigation Tabs */}
-          <nav className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-medium">
-            <button
-              onClick={() => setActiveTab('live')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all ${
-                activeTab === 'live'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 font-semibold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-              }`}
-            >
-              <Activity className="w-3.5 h-3.5" />
-              <span>Live Odds & Predictions</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('simulator')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all ${
-                activeTab === 'simulator'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 font-semibold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-              }`}
-            >
-              <Trophy className="w-3.5 h-3.5" />
-              <span>Match Simulator</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('presentation')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all ${
-                activeTab === 'presentation'
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20 font-semibold'
-                  : 'text-emerald-700 hover:text-emerald-800 hover:bg-white'
-              }`}
-            >
-              <Presentation className="w-3.5 h-3.5" />
-              <span className="font-semibold">Durban Deck (50m)</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('pipeline')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all ${
-                activeTab === 'pipeline'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 font-semibold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-              }`}
-            >
-              <Database className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">API Pipeline</span>
-            </button>
-          </nav>
-
-          {/* Odds API Quota & Refresh Counter */}
-          <div className="flex items-center gap-2">
-            <div className="hidden lg:flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 text-xs shadow-sm">
-              <span className="text-slate-500">Odds API Quota:</span>
-              <span className="font-mono font-semibold text-emerald-600">{quota.remaining}</span>
-              <span className="text-slate-300">/</span>
-              <span className="text-slate-500 font-mono">500</span>
-              {quota.isCached && (
-                <span className="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-mono">
-                  Cached
-                </span>
-              )}
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
+                    .NET Sports Predictor
+                  </h1>
+                  <span className="hidden sm:inline text-[10px] uppercase font-mono tracking-wider text-cyan-700">
+                    Odds API v4
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 hidden sm:block">
+                  Vig-stripping · Monte Carlo · Head-to-head form intelligence
+                </p>
+              </div>
             </div>
 
-            <button
-              onClick={onRefresh}
-              disabled={isLoading}
-              title="Refresh live data"
-              className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors disabled:opacity-50"
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-indigo-500' : ''}`} />
-            </button>
+            <nav className="flex items-center gap-1 p-1 rounded-2xl bg-white/60 border border-white/80 backdrop-blur-xl shadow-sm">
+              {tabs.map(tab => {
+                const Icon = tab.icon;
+                const active = activeTab === tab.id;
+                const accent = tab.id === 'presentation' ? 'emerald' : 'cyan';
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-[11px] sm:text-xs font-semibold transition-all ${
+                      active
+                        ? accent === 'emerald'
+                          ? 'bg-emerald-500/12 text-emerald-700 ring-1 ring-emerald-200/80'
+                          : 'bg-cyan-500/12 text-cyan-700 ring-1 ring-cyan-200/80'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-white/80'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span className="hidden md:inline">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            <div className="flex items-center gap-2">
+              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/70 border border-white/80 shadow-sm text-[11px] backdrop-blur-xl">
+                <span className="text-slate-500">Quota</span>
+                <span className="metric text-emerald-600">{quota.remaining}</span>
+                <span className="text-slate-300">/ 500</span>
+                {quota.isCached && (
+                  <span className="text-[9px] uppercase tracking-wide text-cyan-600 font-semibold">
+                    Cached
+                  </span>
+                )}
+              </div>
+
+              <button
+                onClick={onRefresh}
+                disabled={isLoading}
+                title="Refresh live data"
+                className="p-2 rounded-xl bg-white/70 border border-white/80 hover:bg-white text-slate-600 transition-colors disabled:opacity-50 shadow-sm"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-cyan-500' : ''}`} />
+              </button>
+            </div>
           </div>
         </div>
       </div>

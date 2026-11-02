@@ -1,16 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
 
 @layer base {
   body {
-    background-color: #f7f8fc;
+    background-color: #f8fafc;
+    background-image:
+      radial-gradient(60rem 32rem at 8% -10%, rgba(14, 165, 233, 0.10), transparent 60%),
+      radial-gradient(48rem 30rem at 95% 0%, rgba(16, 185, 129, 0.09), transparent 55%),
+      radial-gradient(40rem 26rem at 50% 110%, rgba(56, 189, 248, 0.08), transparent 60%);
+    background-attachment: fixed;
     color: #0f172a;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
 
   ::selection {
-    background-color: #e0e7ff;
-    color: #312e81;
+    background-color: #cffafe;
+    color: #155e75;
   }
 
   * {
@@ -30,5 +41,39 @@
 
   *::-webkit-scrollbar-track {
     background-color: transparent;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/75 backdrop-blur-xl border border-white/60;
+    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.04);
+  }
+
+  .glass-card {
+    @apply bg-white/75 backdrop-blur-xl border border-white/60 transition-all duration-300;
+    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.04);
+  }
+
+  .glass-card:hover {
+    @apply bg-white/95 border-cyan-200/80;
+    box-shadow: 0 12px 36px rgba(14, 165, 233, 0.10);
+  }
+
+  .glass-modal {
+    @apply bg-white/90 backdrop-blur-2xl border border-white/80;
+    box-shadow: 0 24px 50px rgba(15, 23, 42, 0.14);
+  }
+
+  .inner-well {
+    @apply bg-slate-50/80 border border-slate-200/60;
+  }
+
+  .glass-input {
+    @apply bg-white/80 border border-slate-200/80 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100;
+  }
+
+  .metric {
+    @apply font-mono tabular-nums font-semibold;
   }
 }

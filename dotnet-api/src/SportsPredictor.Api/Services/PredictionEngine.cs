@@ -90,6 +90,8 @@ public sealed class PredictionEngine
         var homeTeam = evt.HomeTeam;
         var awayTeam = evt.AwayTeam;
         var sportTitle = string.IsNullOrWhiteSpace(evt.SportTitle) ? "Sports Event" : evt.SportTitle;
+        var headToHead = H2HService.Build(homeTeam, awayTeam, sportTitle);
+        var formDelta = H2HService.FormProbabilityDelta(headToHead.HomeForm, headToHead.AwayForm, options?.FormWeight ?? 1);
 
         var homePrices = new List<double>();
         var awayPrices = new List<double>();
@@ -130,7 +132,7 @@ public sealed class PredictionEngine
         var trueDrawProb = hasDraw ? rawDrawProb / totalOverround : (double?)null;
 
         var homeAdvantage = (options?.HomeAdvantage ?? 4) / 100;
-        var adjustedHomeProb = Math.Min(0.95, Math.Max(0.05, trueHomeProb + homeAdvantage * 0.3));
+        var adjustedHomeProb = Math.Min(0.95, Math.Max(0.05, trueHomeProb + homeAdvantage * 0.3 + formDelta));
         var remainingProb = 1 - adjustedHomeProb;
 
         double adjustedAwayProb;
@@ -214,6 +216,7 @@ public sealed class PredictionEngine
             $"Market consensus assigns {homeTeam} {fairOddsHome} fair true decimal odds.",
             $"Poisson model estimates {expGoalsHome} to {expGoalsAway} scoring ratio in standard game conditions.",
             $"10,000 Monte Carlo runs indicate {monteCarlo.HomeWins} home wins, {monteCarlo.AwayWins} away wins, and {monteCarlo.Draws} draws.",
+            $"Recent form {H2HService.FormString(headToHead.HomeForm)} vs {H2HService.FormString(headToHead.AwayForm)} applies a {Math.Round(formDelta * 1000, MidpointRounding.AwayFromZero) / 10} pt probability adjustment.",
             valueBets.Count > 0
                 ? $"Value alert: Detected +EV opportunity on {valueBets[0].Team} at {valueBets[0].OfferedOdds} with {valueBets[0].ExpectedValuePct}% positive margin."
                 : "Consensus market prices are tightly aligned with implied probabilities with no major bookmaker inefficiencies.",
@@ -250,6 +253,8 @@ public sealed class PredictionEngine
             ExpectedGoals = new ExpectedGoals { Home = expGoalsHome, Away = expGoalsAway },
             MonteCarlo = monteCarlo,
             ValueBets = valueBets.Take(4).ToList(),
+            FormAdjustment = Math.Round(formDelta * 1000, MidpointRounding.AwayFromZero) / 10,
+            H2H = headToHead,
             TacticalAnalysis = new TacticalAnalysis
             {
                 Summary = $"{homeTeam} holds a projected {Math.Round(adjustedHomeProb * 100)}% win likelihood vs {awayTeam} ({Math.Round(adjustedAwayProb * 100)}%), reflecting consensus bookmaker market pricing after stripping a {overroundPercent}% vigorish fee.",

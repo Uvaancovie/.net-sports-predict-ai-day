@@ -224,6 +224,190 @@ const fallbackEvents = [
 ];
 
 // ==========================================
+// Head-to-Head History & Form Engine
+// ==========================================
+
+export interface FormEntry {
+  result: 'W' | 'D' | 'L';
+  opponent: string;
+  score: string;
+  date: string;
+}
+
+export interface H2HMatch {
+  date: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number;
+  awayScore: number;
+  winner: 'home' | 'away' | 'draw';
+}
+
+export interface HeadToHeadRecord {
+  previousMatches: H2HMatch[];
+  homeForm: FormEntry[];
+  awayForm: FormEntry[];
+  h2hSummary: {
+    homeWins: number;
+    awayWins: number;
+    draws: number;
+    totalMatches: number;
+    avgScore: number;
+  };
+}
+
+const FORM_OPPONENTS: Record<string, string[]> = {
+  cricket: ['India', 'Australia', 'England', 'New Zealand', 'Pakistan', 'Sri Lanka'],
+  basketball: ['Boston Celtics', 'Golden State Warriors', 'Milwaukee Bucks', 'Denver Nuggets', 'Miami Heat'],
+  nfl: ['Kansas City Chiefs', 'Buffalo Bills', 'San Francisco 49ers', 'Dallas Cowboys', 'Philadelphia Eagles'],
+  rugby: ['New Zealand', 'Australia', 'England', 'Ireland', 'France', 'Argentina'],
+  football: ['Manchester City', 'Liverpool', 'Chelsea', 'Tottenham', 'Newcastle', 'Aston Villa'],
+};
+
+function fnv1aHash(value: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i++) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function makeRng(seed: number): () => number {
+  let state = seed >>> 0;
+  if (state === 0) state = 0x9e3779b9;
+  return () => {
+    state ^= state << 13;
+    state >>>= 0;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    state >>>= 0;
+    if (state === 0) state = 0x9e3779b9;
+    return state / 4294967296;
+  };
+}
+
+function sportFamily(sportTitle: string): string {
+  const sport = (sportTitle || '').toLowerCase();
+  if (sport.includes('cricket')) return 'cricket';
+  if (sport.includes('basketball') || sport.includes('nba')) return 'basketball';
+  if (sport.includes('nfl') || sport.includes('american football')) return 'nfl';
+  if (sport.includes('rugby')) return 'rugby';
+  return 'football';
+}
+
+function randomScore(family: string, rng: () => number): number {
+  if (family === 'cricket') return 110 + Math.floor(rng() * 111);
+  if (family === 'basketball') return 88 + Math.floor(rng() * 41);
+  if (family === 'nfl') return 10 + Math.floor(rng() * 28);
+  return Math.floor(rng() * 5);
+}
+
+function isoDaysAgo(days: number): string {
+  const base = Date.UTC(2026, 9, 18);
+  return new Date(base - days * 86400000).toISOString();
+}
+
+function buildForm(team: string, family: string, rng: () => number): FormEntry[] {
+  const pool = FORM_OPPONENTS[family] || FORM_OPPONENTS.football;
+  const entries: FormEntry[] = [];
+
+  for (let i = 0; i < 5; i++) {
+    let opponent = pool[Math.floor(rng() * pool.length)];
+    if (opponent === team) {
+      opponent = pool[(pool.indexOf(opponent) + 1) % pool.length];
+    }
+
+    const teamScore = randomScore(family, rng);
+    const opponentScore = randomScore(family, rng);
+    const result: FormEntry['result'] =
+      teamScore > opponentScore ? 'W' : teamScore < opponentScore ? 'L' : 'D';
+
+    entries.push({
+      result,
+      opponent,
+      score: `${teamScore}-${opponentScore}`,
+      date: isoDaysAgo(7 + i * 7),
+    });
+  }
+
+  return entries;
+}
+
+export function buildHeadToHead(
+  homeTeam: string,
+  awayTeam: string,
+  sportTitle = ''
+): HeadToHeadRecord {
+  const family = sportFamily(sportTitle);
+  const rng = makeRng(fnv1aHash(`${homeTeam}|${awayTeam}|${family}`));
+
+  const previousMatches: H2HMatch[] = [];
+  let homeWins = 0;
+  let awayWins = 0;
+  let draws = 0;
+  let totalScore = 0;
+
+  for (let i = 0; i < 5; i++) {
+    const queriedHomeIsHost = i % 2 === 0;
+    const matchHome = queriedHomeIsHost ? homeTeam : awayTeam;
+    const matchAway = queriedHomeIsHost ? awayTeam : homeTeam;
+    const homeScore = randomScore(family, rng);
+    const awayScore = randomScore(family, rng);
+
+    let winner: H2HMatch['winner'] = 'draw';
+    if (homeScore > awayScore) winner = 'home';
+    else if (awayScore > homeScore) winner = 'away';
+
+    if (winner === 'draw') draws++;
+    else if ((winner === 'home' && queriedHomeIsHost) || (winner === 'away' && !queriedHomeIsHost)) homeWins++;
+    else awayWins++;
+
+    totalScore += homeScore + awayScore;
+    previousMatches.push({
+      date: isoDaysAgo(i * 14),
+      homeTeam: matchHome,
+      awayTeam: matchAway,
+      homeScore,
+      awayScore,
+      winner,
+    });
+  }
+
+  return {
+    previousMatches,
+    homeForm: buildForm(homeTeam, family, rng),
+    awayForm: buildForm(awayTeam, family, rng),
+    h2hSummary: {
+      homeWins,
+      awayWins,
+      draws,
+      totalMatches: previousMatches.length,
+      avgScore: Math.round((totalScore / previousMatches.length) * 10) / 10,
+    },
+  };
+}
+
+function withH2H(events: any): any {
+  if (!Array.isArray(events)) return events;
+  return events.map(event => ({
+    ...event,
+    h2h: buildHeadToHead(event.home_team, event.away_team, event.sport_title),
+  }));
+}
+
+function formPoints(form: FormEntry[]): number {
+  return form.reduce(
+    (acc, entry) => acc + (entry.result === 'W' ? 1 : entry.result === 'D' ? 0.5 : 0),
+    0
+  );
+}
+
+function formProbabilityDelta(homeForm: FormEntry[], awayForm: FormEntry[], weight = 1): number {
+  return ((formPoints(homeForm) - formPoints(awayForm)) / 5) * 0.06 * weight;
+}
+
+// ==========================================
 // Prediction Math Engine
 // ==========================================
 
@@ -306,6 +490,12 @@ function analyzePrediction(event: any, customOptions: any = {}) {
   const homeTeam = event.home_team;
   const awayTeam = event.away_team;
   const sportTitle = event.sport_title || 'Sports Event';
+  const headToHead = buildHeadToHead(homeTeam, awayTeam, sportTitle);
+  const formDelta = formProbabilityDelta(
+    headToHead.homeForm,
+    headToHead.awayForm,
+    customOptions.formWeight ?? 1
+  );
 
   // Extract all h2h market prices across bookmakers
   const homePrices: number[] = [];
@@ -361,7 +551,7 @@ function analyzePrediction(event: any, customOptions: any = {}) {
 
   // Apply optional custom factors (e.g., Home Ground Advantage boost)
   const homeAdvantage = (customOptions.homeAdvantage ?? 4) / 100;
-  const adjustedHomeProb = Math.min(0.95, Math.max(0.05, trueHomeProb + homeAdvantage * 0.3));
+  const adjustedHomeProb = Math.min(0.95, Math.max(0.05, trueHomeProb + homeAdvantage * 0.3 + formDelta));
   const remainingProb = 1 - adjustedHomeProb;
   const adjustedAwayProb = trueDrawProb ? remainingProb * (trueAwayProb / (trueAwayProb + trueDrawProb)) : remainingProb;
   const adjustedDrawProb = trueDrawProb ? remainingProb * (trueDrawProb / (trueAwayProb + trueDrawProb)) : undefined;
@@ -457,12 +647,15 @@ function analyzePrediction(event: any, customOptions: any = {}) {
     },
     monteCarlo,
     valueBets: bookmakerValueChecks.slice(0, 4),
+    formAdjustment: Math.round(formDelta * 1000) / 10,
+    h2h: headToHead,
     tacticalAnalysis: {
       summary: `${homeTeam} holds a projected ${Math.round(adjustedHomeProb * 100)}% win likelihood vs ${awayTeam} (${Math.round(adjustedAwayProb * 100)}%), reflecting consensus bookmaker market pricing after stripping a ${overroundPercent}% vigorish fee.`,
       keyFactors: [
         `Market consensus assigns ${homeTeam} ${fairOddsHome} fair true decimal odds.`,
         `Poisson model estimates ${expGoalsHome} to ${expGoalsAway} scoring ratio in standard game conditions.`,
         `10,000 Monte Carlo runs indicate ${monteCarlo.homeWins} home wins, ${monteCarlo.awayWins} away wins, and ${monteCarlo.draws} draws.`,
+        `Recent form ${headToHead.homeForm.map(f => f.result).join('-')} vs ${headToHead.awayForm.map(f => f.result).join('-')} applies a ${Math.round(formDelta * 1000) / 10} pt probability adjustment.`,
         bookmakerValueChecks.length > 0
           ? `Value alert: Detected +EV opportunity on ${bookmakerValueChecks[0].team} at ${bookmakerValueChecks[0].offeredOdds} with ${bookmakerValueChecks[0].expectedValuePct}% positive margin.`
           : 'Consensus market prices are tightly aligned with implied probabilities with no major bookmaker inefficiencies.',
@@ -509,7 +702,7 @@ app.get('/api/odds/events', async (req: Request, res: Response) => {
   const cached = getCached(cacheKey);
   if (cached) {
     res.json({
-      events: cached.data,
+      events: withH2H(cached.data),
       sportKey: sport,
       quota: { ...quotaTelemetry, isCached: true, ttlRemaining: cached.ttlRemaining },
     });
@@ -529,7 +722,7 @@ app.get('/api/odds/events', async (req: Request, res: Response) => {
     setCache(cacheKey, data, 1000 * 60 * 5);
 
     res.json({
-      events: data,
+      events: withH2H(data),
       sportKey: sport,
       quota: { ...quotaTelemetry, isCached: false },
     });
@@ -541,7 +734,7 @@ app.get('/api/odds/events', async (req: Request, res: Response) => {
       : fallbackEvents.filter(e => e.sport_key === sport);
 
     res.json({
-      events: filtered.length ? filtered : fallbackEvents,
+      events: withH2H(filtered.length ? filtered : fallbackEvents),
       sportKey: sport,
       quota: { ...quotaTelemetry, isCached: true },
       fallbackNotice: 'Demonstration data loaded (Odds API network call bypassed or rate limited)',
@@ -619,6 +812,139 @@ app.post('/api/predict/custom', (req: Request, res: Response) => {
   });
 
   res.json({ success: true, prediction });
+});
+
+// ==========================================
+// SaaS Subscriptions & Simulated Checkout (ZAR)
+// ==========================================
+
+interface SubscriptionRecord {
+  id: string;
+  planId: 'free' | 'pro' | 'syndicate';
+  planName: string;
+  billingInterval: 'monthly' | 'annual';
+  amountZar: number;
+  vatZar: number;
+  licenseKey: string;
+  txRef: string;
+  createdAt: string;
+  expiresAt: string;
+  status: 'active' | 'trialing' | 'expired';
+  customerName: string;
+  customerEmail: string;
+  paymentMethod: 'card' | 'instant_eft';
+  paymentDetailsSummary: string;
+}
+
+const subscriptionsStore = new Map<string, SubscriptionRecord>();
+
+// Pre-seed a demo active license key
+const demoLicenseKey = 'UBP-PRO-2026-DURBAN-001';
+subscriptionsStore.set(demoLicenseKey, {
+  id: 'sub-demo-01',
+  planId: 'pro',
+  planName: 'Pro Punter',
+  billingInterval: 'monthly',
+  amountZar: 249,
+  vatZar: 32.48,
+  licenseKey: demoLicenseKey,
+  txRef: 'TXN-ZA-2026-0001',
+  createdAt: new Date().toISOString(),
+  expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+  status: 'active',
+  customerName: 'Durban Community Punter',
+  customerEmail: 'speaker@betpredict.co.za',
+  paymentMethod: 'card',
+  paymentDetailsSummary: 'Visa ending in 4242',
+});
+
+function generateLicenseKey(planId: string): string {
+  const chars = '0123456789ABCDEF';
+  const chunk = () => Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  return `UBP-${planId.toUpperCase()}-${chunk()}-${chunk()}-${chunk()}`;
+}
+
+// Checkout simulation endpoint
+app.post('/api/checkout/simulate', (req: Request, res: Response) => {
+  const {
+    planId = 'pro',
+    billingInterval = 'monthly',
+    paymentMethod = 'card',
+    customerName = 'South African Bettor',
+    customerEmail = 'punter@domain.co.za',
+    cardDetails,
+    eftDetails,
+  } = req.body;
+
+  let planName = 'Pro Punter';
+  let amountZar = 249;
+  let durationDays = 30;
+
+  if (planId === 'free') {
+    planName = 'Free Trial (7-Day)';
+    amountZar = 0;
+    durationDays = 7;
+  } else if (planId === 'pro') {
+    planName = 'Pro Punter';
+    amountZar = billingInterval === 'annual' ? 199 * 12 : 249;
+    durationDays = billingInterval === 'annual' ? 365 : 30;
+  } else if (planId === 'syndicate') {
+    planName = 'Syndicate Enterprise';
+    amountZar = billingInterval === 'annual' ? 719 * 12 : 899;
+    durationDays = billingInterval === 'annual' ? 365 : 30;
+  }
+
+  // 15% South African VAT computation
+  const vatZar = Math.round((amountZar * 15) / 115 * 100) / 100;
+
+  let paymentSummary = '7-Day Free Pass';
+  if (paymentMethod === 'card') {
+    const last4 = cardDetails?.cardNumberLast4 || '4242';
+    paymentSummary = `Card ending in •••• ${last4} (3D Secure Authenticated)`;
+  } else if (paymentMethod === 'instant_eft') {
+    const bank = eftDetails?.bank || 'Capitec Pay';
+    paymentSummary = `Instant EFT via ${bank} (SA Real-Time Clearing)`;
+  }
+
+  const licenseKey = generateLicenseKey(planId);
+  const txRef = `TXN-ZA-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+  const subscription: SubscriptionRecord = {
+    id: `sub_${Date.now()}`,
+    planId,
+    planName,
+    billingInterval,
+    amountZar,
+    vatZar,
+    licenseKey,
+    txRef,
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString(),
+    status: planId === 'free' ? 'trialing' : 'active',
+    customerName,
+    customerEmail,
+    paymentMethod,
+    paymentDetailsSummary: paymentSummary,
+  };
+
+  subscriptionsStore.set(licenseKey, subscription);
+
+  res.json({
+    success: true,
+    message: 'Subscription payment successfully processed and license activated.',
+    subscription,
+  });
+});
+
+// Verify license key endpoint
+app.get('/api/checkout/verify/:licenseKey', (req: Request, res: Response) => {
+  const licenseKey = String(req.params.licenseKey || '');
+  const sub = subscriptionsStore.get(licenseKey);
+  if (!sub) {
+    res.status(404).json({ success: false, message: 'License key not found or expired.' });
+    return;
+  }
+  res.json({ success: true, subscription: sub });
 });
 
 // ==========================================
